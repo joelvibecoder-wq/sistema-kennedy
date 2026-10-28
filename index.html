@@ -16,6 +16,46 @@
 @keyframes action-spin{to{transform:rotate(360deg)}}@keyframes action-pop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}@keyframes action-progress{0%{transform:translateX(-110%)}100%{transform:translateX(320%)}}
 @media(prefers-reduced-motion:reduce){.action-overlay,.action-dialog{transition:none}.action-spinner,.action-check,.action-progress span{animation:none}}
 
+
+/* Layout adaptável para celulares e tablets */
+@media(max-width:720px){
+ body{font-size:16px}
+ .app{width:100%;max-width:100%;padding:12px}
+ header,.panel{padding:16px;border-radius:13px;margin-bottom:12px}
+ header h1{font-size:clamp(24px,7vw,32px);line-height:1.15}
+ header p{font-size:14px}
+ h2{font-size:18px;line-height:1.3}
+ .row{display:flex;flex-direction:column;align-items:stretch;gap:10px;width:100%}
+ .row>*{width:100%;min-width:0;max-width:100%}
+ input,button{min-height:44px;font-size:16px}
+ input[type=file]{padding:8px;font-size:14px}
+ button{white-space:normal}
+ .status{overflow-wrap:anywhere}
+ .tablewrap{width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+ table{min-width:480px;font-size:14px}
+ th,td{padding:8px}
+ .batch-grid{grid-template-columns:1fr;gap:10px}
+ .ticket{width:100%;min-width:0;gap:10px;padding:10px}
+ .ticket-qr{width:84px;height:84px;flex-basis:84px}
+ .ticket-qr img,.ticket-qr canvas{max-width:84px;max-height:84px}
+ .ticket h3{font-size:13px;overflow-wrap:anywhere}
+ .ticket p{overflow-wrap:anywhere}
+ .action-overlay{padding:16px}
+ .action-dialog{width:min(360px,100%);padding:24px 18px}
+}
+@media(min-width:421px) and (max-width:720px){
+ .batch-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .ticket{align-items:flex-start;flex-direction:column}
+ .ticket-qr{align-self:center}
+}
+@media(max-width:360px){
+ .app{padding:8px}
+ header,.panel{padding:12px}
+ .ticket{gap:8px}
+ .ticket-qr{width:72px;height:72px;flex-basis:72px}
+ .ticket-qr img,.ticket-qr canvas{max-width:72px;max-height:72px}
+}
+
 </style></head><body><main class="app"><header><h1>Kennedy Presente</h1><p>Colégio Estadual Presidente Kennedy · protótipo local de cadastro e carteirinhas QR</p></header>
 <section class="panel"><strong>Importante:</strong> este protótipo salva os dados somente neste navegador e não é integrado ao sistema oficial da SEED-PR. Use dados fictícios para testes; o uso real depende de autorização e avaliação de privacidade e segurança.</section>
 <section class="panel"><h2>1. Importar alunos em lote por CSV</h2><p class="muted">Colunas obrigatórias: <b>codigo,nome,turma</b>. A coluna <b>turno</b> é opcional. No Excel, salve a planilha como CSV UTF-8. Turmas ficam associadas ao texto informado.</p><div class="row noprint"><input id="csvFile" type="file" accept=".csv,text/csv"><button id="importBtn">Importar CSV</button><button id="templateBtn" class="secondary">Baixar modelo CSV</button></div><div id="importStatus" class="status" aria-live="polite">Nenhum arquivo importado ainda.</div></section>
@@ -23,6 +63,15 @@
 <section class="panel"><h2>3. Gerar e imprimir carteirinhas</h2><p class="muted">Cada QR contém um identificador aleatório, não o nome nem o CPF do estudante.</p><div class="row noprint"><button id="generateBtn">Gerar QR Codes de todos</button><button id="printBtn" class="secondary">Imprimir todas as carteirinhas</button></div></section>
 <section class="panel" id="cardsPanel"><h2>Folha de carteirinhas</h2><div class="row noprint"><button id="printPreviewBtn" class="secondary">Imprimir folha gerada</button></div><div id="cards" class="muted">Cadastre ou importe alunos e gere os QR Codes.</div></section>
 <section class="panel"><h2>4. Consultar carteirinha</h2><form id="lookupForm" class="row noprint"><input id="lookupCode" required placeholder="Digite código escolar ou KP:identificador"><button>Consultar</button></form><div id="lookupResult" class="status"></div></section><footer class="muted">Protótipo demonstrativo. Não substitui o sistema oficial de frequência.</footer></main>
+<div id="actionOverlay" class="action-overlay" role="status" aria-live="polite" aria-atomic="true">
+ <div class="action-dialog">
+  <div id="actionVisual" class="action-spinner" aria-hidden="true"></div>
+  <h2 id="actionTitle" class="action-title">Processando...</h2>
+  <p id="actionMessage" class="action-message">Aguarde um instante.</p>
+  <div id="actionProgress" class="action-progress" aria-hidden="true"><span></span></div>
+ </div>
+</div>
+
 <script>
 const KEY='kennedyPresenteBatchV3';const uid=()=>crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);let db;try{db=JSON.parse(localStorage.getItem(KEY))||{students:[]}}catch(e){db={students:[]}}const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));function save(){localStorage.setItem(KEY,JSON.stringify(db));renderStudents()}function renderStudents(){document.getElementById('counts').textContent=db.students.length+' aluno(s) cadastrado(s).';document.getElementById('studentTable').innerHTML=db.students.length?'<table><thead><tr><th>Nome</th><th>Código</th><th>Turma</th><th>Turno</th></tr></thead><tbody>'+db.students.map(s=>'<tr><td>'+esc(s.name)+'</td><td>'+esc(s.code)+'</td><td>'+esc(s.className)+'</td><td>'+esc(s.shift)+'</td></tr>').join('')+'</tbody></table>':'<p class="muted">Nenhum aluno cadastrado.</p>'}function norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}function parseCSV(t){t=t.replace(/^\uFEFF/,'');const first=t.split(/\r?\n/).find(x=>x.trim())||'',d=(first.match(/;/g)||[]).length>(first.match(/,/g)||[]).length?';':',';let rows=[],row=[],v='',q=false;for(let i=0;i<t.length;i++){let c=t[i];if(c==='"'&&q&&t[i+1]==='"'){v+='"';i++}else if(c==='"')q=!q;else if(c===d&&!q){row.push(v.trim());v=''}else if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&t[i+1]==='\n')i++;row.push(v.trim());if(row.some(x=>x))rows.push(row);row=[];v=''}else v+=c}row.push(v.trim());if(row.some(x=>x))rows.push(row);return rows}function download(n,c){const a=document.createElement('a'),u=URL.createObjectURL(new Blob(['\uFEFF'+c],{type:'text/csv;charset=utf-8'}));a.href=u;a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
 document.getElementById('templateBtn').onclick=()=>download('modelo-alunos-kennedy.csv','codigo,nome,turma,turno\r\nALU-001,Ana Exemplo,1º ano A,Manhã\r\nALU-002,Bruno Exemplo,1º ano A,Manhã\r\nALU-003,Carla Exemplo,1º ano B,Tarde\r\n');document.getElementById('importBtn').onclick=async()=>{let f=document.getElementById('csvFile').files[0],st=document.getElementById('importStatus');if(!f){st.textContent='Escolha um arquivo CSV.';return}try{let rows=parseCSV(await f.text());if(rows.length<2)throw Error('CSV precisa de cabeçalho e ao menos uma linha.');let h=rows[0].map(norm),idx=(...n)=>h.findIndex(x=>n.includes(x)),ic=idx('codigo','codigo escolar','code'),inm=idx('nome','nome do aluno','aluno'),it=idx('turma','classe','class'),ish=idx('turno','periodo','shift');if(ic<0||inm<0||it<0)throw Error('Cabeçalhos obrigatórios: codigo, nome, turma.');let added=0,dup=0,bad=0;rows.slice(1).forEach(r=>{let code=(r[ic]||'').trim(),name=(r[inm]||'').trim(),className=(r[it]||'').trim(),shift=(ish>=0?(r[ish]||'').trim():'Manhã')||'Manhã';if(!code||!name||!className){bad++;return}if(db.students.some(s=>s.code.toLowerCase()===code.toLowerCase())){dup++;return}db.students.push({id:uid(),token:uid(),code,name,className,shift});added++});save();st.textContent='Concluído: '+added+' adicionado(s), '+dup+' duplicado(s) ignorado(s), '+bad+' linha(s) incompleta(s).';document.getElementById('csvFile').value=''}catch(e){st.textContent='Erro: '+e.message}};
@@ -69,13 +118,5 @@ wrapFormAction('lookupForm','Consultando cadastro');
 
 renderStudents();
 </script>
-<div id="actionOverlay" class="action-overlay" role="status" aria-live="polite" aria-atomic="true">
- <div class="action-dialog">
-  <div id="actionVisual" class="action-spinner" aria-hidden="true"></div>
-  <h2 id="actionTitle" class="action-title">Processando...</h2>
-  <p id="actionMessage" class="action-message">Aguarde um instante.</p>
-  <div id="actionProgress" class="action-progress" aria-hidden="true"><span></span></div>
- </div>
-</div>
 
 </body></html>
