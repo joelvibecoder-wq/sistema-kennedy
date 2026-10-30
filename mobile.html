@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#14532d">
+<title>Kennedy Presente Mobile</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+:root{--green:#14532d;--bright:#16a34a;--pale:#f1f8f2;--line:#d8e8db;--ink:#173323}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(150deg,#eaf7ed,#f8fbf8 55%,#e4f2e7);color:var(--ink);font:16px/1.5 system-ui,Arial,sans-serif}
+button{font:inherit;cursor:pointer}.shell{width:min(100% - 28px,460px);margin:28px auto 40px}
+.brand{display:flex;align-items:center;gap:12px;margin:0 4px 18px}.brand-mark{width:48px;height:48px;border-radius:15px;background:linear-gradient(145deg,#14532d,#16a34a);display:grid;place-items:center;color:white;font-size:22px;font-weight:900;box-shadow:0 8px 20px #14532d28}.brand h1{font-size:20px;line-height:1.15;margin:0;color:var(--green)}.brand p{margin:4px 0 0;font-size:12px;color:#607768}
+.panel{background:#fff;border:1px solid var(--line);border-radius:24px;padding:24px;box-shadow:0 12px 35px #174a2510}
+.welcome{text-align:center;padding:30px 22px}.welcome-icon{width:76px;height:76px;border-radius:24px;background:#e7f6ea;color:var(--green);display:grid;place-items:center;margin:0 auto 18px}.welcome h2{margin:0 0 8px;font-size:24px;color:var(--green)}.welcome p{margin:0 auto 22px;max-width:320px;color:#627768;font-size:14px}
+.google-btn{width:100%;min-height:52px;border:1px solid #d5ded7;border-radius:13px;background:#fff;color:#26352b;font-weight:700;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 3px 10px #142d190d}.google-btn:hover{background:#f8fbf8}.google-g{font-weight:900;font-size:20px;color:#4285f4}.fine{font-size:11px;color:#718276;margin:15px 0 0}
+.notice{margin-top:14px;padding:12px 14px;border-radius:12px;background:#f0f7f1;color:#4b6553;font-size:12px}
+.error{margin-top:14px;padding:12px 14px;border-radius:12px;background:#fff4e8;color:#8a4b0b;font-size:13px;display:none}
+.hidden{display:none!important}
+.card-top{text-align:center}.photo{width:112px;height:112px;border-radius:50%;object-fit:cover;border:5px solid #e8f5eb;box-shadow:0 5px 18px #14532d20;background:#edf5ef}.student-name{font-size:23px;font-weight:800;color:var(--green);margin:14px 0 3px}.school-name{font-size:13px;color:#6b7d70;margin:0}
+.cgm-box{margin:22px 0 18px;padding:13px 15px;border-radius:14px;background:#f3f9f4;display:flex;justify-content:space-between;align-items:center}.cgm-label{font-size:12px;color:#6a7b6e}.cgm-value{font-size:19px;font-weight:800;letter-spacing:.04em;color:var(--green)}
+.qr-area{border:1px dashed #b7d5be;border-radius:18px;padding:18px;text-align:center}.qr-area h3{font-size:15px;margin:0 0 4px;color:var(--green)}.qr-area p{font-size:12px;color:#6b7d70;margin:0 0 12px}.qr-box{width:180px;height:180px;margin:auto;display:grid;place-items:center;background:white}.qr-box img,.qr-box canvas{max-width:180px;max-height:180px}.qr-placeholder{color:#91a397;font-size:12px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.action{min-height:46px;border-radius:12px;border:0;background:#e7f5e9;color:var(--green);font-weight:700}.action.primary{background:var(--bright);color:#fff}.logout{width:100%;margin-top:10px;min-height:44px;border:1px solid #e0e9e2;background:#fff;color:#607768;border-radius:12px}
+.foot{text-align:center;color:#809084;font-size:11px;margin:18px 8px}.loading{opacity:.65;pointer-events:none}
+@media(max-width:380px){.shell{width:min(100% - 18px,460px);margin:14px auto}.panel{padding:19px}.welcome{padding:26px 17px}.student-name{font-size:21px}}
+@media print{body{background:#fff}.brand,.actions,.logout,.foot{display:none!important}.shell{margin:0;width:100%}.panel{box-shadow:none;border:0}.student-panel{max-width:440px;margin:auto}}
+</style>
+</head>
+<body>
+<main class="shell">
+<header class="brand"><div class="brand-mark">K</div><div><h1>Kennedy Presente</h1><p>Carteirinha digital do estudante</p></div></header>
+<section id="loginPanel" class="panel welcome">
+ <div class="welcome-icon" aria-hidden="true">
+  <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 8v6m-3-3h6"/></svg>
+ </div>
+ <h2>Sua escola, no seu celular</h2>
+ <p>Entre com seu e-mail institucional Google para acessar sua carteirinha digital, com foto, CGM e QR Code individual.</p>
+ <button id="googleButton" class="google-btn" type="button"><span class="google-g">G</span> Entrar com Google</button>
+ <div id="loginError" class="error" role="alert"></div>
+ <div class="notice">A senha é digitada somente na página oficial do Google. Este aplicativo não solicita nem guarda sua senha.</div>
+ <p class="fine">Acesso destinado aos estudantes autorizados do Colégio Estadual Presidente Kennedy.</p>
+</section>
+<section id="studentPanel" class="panel student-panel hidden">
+ <div class="card-top">
+  <img id="studentPhoto" class="photo" alt="Foto do estudante">
+  <div id="studentName" class="student-name">Estudante</div>
+  <p id="schoolName" class="school-name">Colégio Estadual Presidente Kennedy</p>
+ </div>
+ <div class="cgm-box"><div><div class="cgm-label">Código Geral de Matrícula</div><div class="cgm-value" id="studentCgm">—</div></div><span aria-hidden="true">🎓</span></div>
+ <div class="qr-area"><h3>QR Code do estudante</h3><p>Apresente este código na entrada da escola</p><div id="qrCode" class="qr-box"><span class="qr-placeholder">QR Code protegido</span></div></div>
+ <div class="actions"><button class="action primary" id="printButton" type="button">Imprimir</button><button class="action" id="refreshButton" type="button">Atualizar</button></div>
+ <button class="logout" id="logoutButton" type="button">Sair da conta</button>
+</section>
+<p class="foot">Protótipo de demonstração · Os dados reais dependem da integração autorizada com a escola.</p>
+</main>
+<script>
+/*
+CONFIGURAÇÃO NECESSÁRIA ANTES DO USO REAL:
+1) Definir GOOGLE_CLIENT_ID com o ID OAuth Web criado no Google Cloud.
+2) Configurar o endpoint HTTPS /api/auth/google no servidor.
+3) O servidor deve validar o ID token do Google, restringir o domínio institucional
+   permitido e associar o e-mail autenticado ao cadastro escolar.
+4) Retornar somente os dados do aluno autenticado e um token QR aleatório.
+   Nunca aceite CGM/foto/QR enviados pelo navegador como prova de identidade.
+*/
+const GOOGLE_CLIENT_ID = "CONFIGURAR_CLIENT_ID_OAUTH.apps.googleusercontent.com";
+const AUTH_ENDPOINT = "/api/auth/google";
+const loginPanel=document.getElementById("loginPanel");
+const studentPanel=document.getElementById("studentPanel");
+const loginError=document.getElementById("loginError");
+let googleCredential=null;
+function showError(message){loginError.textContent=message;loginError.style.display="block"}
+function startGoogleLogin(){
+ if(GOOGLE_CLIENT_ID.startsWith("CONFIGURAR_")){
+  showError("O login Google ainda precisa ser configurado pela administração da escola. Nenhuma senha deve ser digitada neste protótipo.");
+  return;
+ }
+ if(!window.google||!google.accounts||!google.accounts.id){
+  showError("Não foi possível carregar o login do Google. Verifique a conexão e tente novamente.");
+  return;
+ }
+ google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:handleGoogleCredential});
+ google.accounts.id.prompt();
+}
+async function handleGoogleCredential(response){
+ googleCredential=response.credential;
+ loginPanel.classList.add("loading");
+ try{
+  const result=await fetch(AUTH_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({credential:googleCredential})});
+  if(!result.ok)throw new Error(result.status===401?"Este e-mail não está autorizado ou não foi associado a um cadastro escolar.":"Não foi possível validar seu acesso.");
+  const data=await result.json();
+  if(!data.student||!data.student.name||!data.student.cgm||!data.student.qrToken)throw new Error("O servidor não retornou os dados necessários da carteirinha.");
+  renderStudent(data.student);
+ }catch(error){showError(error.message||"Falha ao entrar. Tente novamente.");}
+ finally{loginPanel.classList.remove("loading");googleCredential=null;}
+}
+function renderStudent(student){
+ document.getElementById("studentName").textContent=student.name;
+ document.getElementById("studentCgm").textContent=student.cgm;
+ document.getElementById("schoolName").textContent=student.schoolName||"Colégio Estadual Presidente Kennedy";
+ const photo=document.getElementById("studentPhoto");
+ photo.src=student.photoUrl||"";
+ photo.alt="Foto de "+student.name;
+ const qr=document.getElementById("qrCode");qr.innerHTML="";
+ if(!window.QRCode){qr.textContent="Não foi possível carregar o gerador de QR Code.";return;}
+ new QRCode(qr,{text:"KP:"+student.qrToken,width:180,height:180,colorDark:"#14532d",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
+ loginPanel.classList.add("hidden");studentPanel.classList.remove("hidden");
+}
+document.getElementById("googleButton").addEventListener("click",startGoogleLogin);
+document.getElementById("printButton").addEventListener("click",()=>window.print());
+document.getElementById("refreshButton").addEventListener("click",async()=>{
+ try{const r=await fetch("/api/student/me",{credentials:"include"});if(!r.ok)throw new Error("Sessão expirada. Entre novamente.");const d=await r.json();renderStudent(d.student);}
+ catch(e){studentPanel.classList.add("hidden");loginPanel.classList.remove("hidden");showError(e.message);}
+});
+document.getElementById("logoutButton").addEventListener("click",async()=>{
+ try{await fetch("/api/auth/logout",{method:"POST",credentials:"include"});}finally{studentPanel.classList.add("hidden");loginPanel.classList.remove("hidden");document.getElementById("qrCode").innerHTML='<span class="qr-placeholder">QR Code protegido</span>';loginError.style.display="none";}
+});
+</script>
+</body>
+</html>
