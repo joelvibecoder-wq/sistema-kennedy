@@ -37,11 +37,14 @@ button{font:inherit;cursor:pointer}.shell{width:min(100% - 28px,460px);margin:28
  <h2>Sua escola, no seu celular</h2>
  <p>Entre com seu e-mail institucional Google para acessar sua carteirinha digital, com foto, CGM e QR Code individual.</p>
  <button id="googleButton" class="google-btn" type="button"><span class="google-g">G</span> Entrar com Google</button>
+ <button id="demoButton" class="google-btn" type="button" style="margin-top:10px;background:#eff8f0;border-color:#b9d9c0;color:#14532d">🧪 Entrar no modo de teste</button>
+ <div class="notice" style="background:#fff8e8;color:#80551a">Modo de teste: usa um estudante inventado e dados fictícios. Não representa uma matrícula real e não valida entrada na escola.</div>
  <div id="loginError" class="error" role="alert"></div>
  <div class="notice">A senha é digitada somente na página oficial do Google. Este aplicativo não solicita nem guarda sua senha.</div>
  <p class="fine">Acesso destinado aos estudantes autorizados do Colégio Estadual Presidente Kennedy.</p>
 </section>
 <section id="studentPanel" class="panel student-panel hidden">
+ <div id="demoBanner" class="notice hidden" style="margin:0 0 16px;text-align:center;background:#fff4d8;color:#80551a;font-weight:800">🧪 MODO DE TESTE — DADOS 100% FICTÍCIOS</div>
  <div class="card-top">
   <img id="studentPhoto" class="photo" alt="Foto do estudante">
   <div id="studentName" class="student-name">Estudante</div>
@@ -70,6 +73,7 @@ const loginPanel=document.getElementById("loginPanel");
 const studentPanel=document.getElementById("studentPanel");
 const loginError=document.getElementById("loginError");
 let googleCredential=null;
+let demoModeActive=false;
 function showError(message){loginError.textContent=message;loginError.style.display="block"}
 function startGoogleLogin(){
  if(GOOGLE_CLIENT_ID.startsWith("CONFIGURAR_")){
@@ -96,6 +100,8 @@ async function handleGoogleCredential(response){
  finally{loginPanel.classList.remove("loading");googleCredential=null;}
 }
 function renderStudent(student){
+ demoModeActive=!!student.demoMode;
+ document.getElementById("demoBanner").classList.toggle("hidden",!demoModeActive);
  document.getElementById("studentName").textContent=student.name;
  document.getElementById("studentCgm").textContent=student.cgm;
  document.getElementById("schoolName").textContent=student.schoolName||"Colégio Estadual Presidente Kennedy";
@@ -107,6 +113,15 @@ function renderStudent(student){
  new QRCode(qr,{text:"KP:"+student.qrToken,width:180,height:180,colorDark:"#14532d",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
  loginPanel.classList.add("hidden");studentPanel.classList.remove("hidden");
 }
+function fictionalAvatar(){
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><rect width="240" height="240" rx="120" fill="#dff2e3"/><circle cx="120" cy="91" r="47" fill="#f2c7a5"/><path d="M72 91c0-45 23-67 52-67 34 0 55 25 52 68-12-14-24-20-42-20-21 0-39 8-62 19z" fill="#3b302b"/><path d="M42 240c4-53 34-81 78-81s74 28 78 81" fill="#19804a"/><circle cx="103" cy="95" r="4" fill="#27352c"/><circle cx="137" cy="95" r="4" fill="#27352c"/><path d="M106 119q14 12 28 0" fill="none" stroke="#9a594b" stroke-width="4" stroke-linecap="round"/></svg>';
+ return "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(svg);
+}
+function enterDemoMode(){
+ loginError.style.display="none";
+ renderStudent({name:"Lucas Teste da Silva",cgm:"000000000000",schoolName:"Escola de Demonstração Kennedy",photoUrl:fictionalAvatar(),qrToken:"DEMO-KP-NAO-VALIDO-0001",demoMode:true});
+}
+document.getElementById("demoButton").addEventListener("click",enterDemoMode);
 document.getElementById("googleButton").addEventListener("click",startGoogleLogin);
 document.getElementById("printButton").addEventListener("click",()=>window.print());
 document.getElementById("refreshButton").addEventListener("click",async()=>{
@@ -114,7 +129,7 @@ document.getElementById("refreshButton").addEventListener("click",async()=>{
  catch(e){studentPanel.classList.add("hidden");loginPanel.classList.remove("hidden");showError(e.message);}
 });
 document.getElementById("logoutButton").addEventListener("click",async()=>{
- try{await fetch("/api/auth/logout",{method:"POST",credentials:"include"});}finally{studentPanel.classList.add("hidden");loginPanel.classList.remove("hidden");document.getElementById("qrCode").innerHTML='<span class="qr-placeholder">QR Code protegido</span>';loginError.style.display="none";}
+ try{if(!demoModeActive){await fetch("/api/auth/logout",{method:"POST",credentials:"include"});}}finally{demoModeActive=false;studentPanel.classList.add("hidden");loginPanel.classList.remove("hidden");document.getElementById("demoBanner").classList.add("hidden");document.getElementById("qrCode").innerHTML='<span class="qr-placeholder">QR Code protegido</span>';loginError.style.display="none";}
 });
 </script>
 </body>
