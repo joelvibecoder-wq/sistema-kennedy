@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedInAdmin() {
+      return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    match /admins/{adminUid} {
+      allow read: if request.auth != null && request.auth.uid == adminUid;
+      // Provision administrators manually in Firebase Console.
+      allow write: if false;
+    }
+    match /students/{studentId} {
+      allow read, create, update, delete: if signedInAdmin();
+    }
+  }
+}
